@@ -1,0 +1,50 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.metrics import mean_squared_error, r2_score
+
+# 1. Generate Synthetic Data
+np.random.seed(42)
+tv_spend = np.random.uniform(10, 300, 200)  # TV ad spend between $10k to $300k
+noise = np.random.normal(0, 3, 200)         # Random noise
+sales = 0.05 * tv_spend + 5 + noise         # Sales = 0.05*TV + 5 + noise
+
+# Create DataFrame
+df = pd.DataFrame({'TV': tv_spend, 'Sales': sales})
+
+# 2. Train-Test Split
+X = df[['TV']]
+y = df['Sales']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 3. Train Model
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# 4. Predict
+y_pred = model.predict(X_test)
+
+# 5. Evaluate
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+print(f"Mean Squared Error (MSE): {mse:.4f}")
+print(f"R² Score: {r2:.4f}")
+print(f"Intercept: {model.intercept_:.4f}")
+print(f"Coefficient (TV): {model.coef_[0]:.4f}")
+
+# 6. Visualize
+plt.scatter(X_test, y_test, color='blue', label="Actual")
+plt.plot(X_test, y_pred, color='red', linewidth=2, label="Predicted Line")
+plt.xlabel("TV Advertisement Spend ($)")
+plt.ylabel("Sales (units)")
+plt.title("Simple Linear Regression on Synthetic Data")
+plt.legend()
+plt.show()
+
+# 7. Cross-validation (k=5)
+cv_scores = cross_val_score(model, X, y, cv=5, scoring='r2')
+print(f"Cross-Validation R² Scores: {cv_scores}")
+print(f"Mean R² Score (CV): {np.mean(cv_scores):.4f}")
