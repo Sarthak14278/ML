@@ -1,0 +1,52 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.model_selection import train_test_split, cross_val_score
+
+# 1. Create Synthetic Dataset
+np.random.seed(42)
+n_samples = 200
+
+TV = np.random.uniform(10, 300, n_samples)
+Radio = np.random.uniform(5, 50, n_samples)
+Newspaper = np.random.uniform(1, 30, n_samples)
+noise = np.random.normal(0, 3, n_samples)
+
+# Sales = 0.045*TV + 0.18*Radio + 0.01*Newspaper + 4 + noise
+Sales = 0.045 * TV + 0.18 * Radio + 0.01 * Newspaper + 4 + noise
+
+# Combine into DataFrame
+df = pd.DataFrame({
+    'TV': TV,
+    'Radio': Radio,
+    'Newspaper': Newspaper,
+    'Sales': Sales
+})
+
+# 2. Train-Test Split
+X = df[['TV', 'Radio', 'Newspaper']]
+y = df['Sales']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 3. Train Model
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# 4. Predict
+y_pred = model.predict(X_test)
+
+# 5. Evaluation
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+print(f"Mean Squared Error (MSE): {mse:.4f}")
+print(f"R² Score: {r2:.4f}")
+print(f"Intercept: {model.intercept_:.4f}")
+print(f"Coefficients: {list(zip(X.columns, model.coef_))}")
+
+# 6. Cross-validation
+cv_scores = cross_val_score(model, X, y, cv=5, scoring='r2')
+print(f"Cross-Validation R² Scores: {cv_scores}")
+print(f"Mean R² Score (CV): {np.mean(cv_scores):.4f}")
