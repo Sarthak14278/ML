@@ -1,0 +1,581 @@
+#----ANN--------------------
+
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+from sklearn.datasets import load_iris
+
+# 1. Load the Iris dataset
+iris = load_iris()
+X = pd.DataFrame(iris.data, columns=iris.feature_names)
+y = pd.Series(iris.target, name='Species')
+
+# 2. Train-Test Split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 3. Build ANN Model
+model = Sequential()
+model.add(Dense(10, input_dim=4, activation='relu'))  # Input + 1st hidden layer
+model.add(Dense(8, activation='relu'))                # 2nd hidden layer
+model.add(Dense(3, activation='softmax'))             # Output layer (3 classes)
+
+# 4. Compile Model
+model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+# 5. Train Model
+model.fit(X_train, y_train, epochs=100, batch_size=10, verbose=1)
+
+# 6. Evaluate Model
+loss, accuracy = model.evaluate(X_test, y_test, verbose=0)
+print(f"\n🔹 ANN Model Accuracy: {accuracy:.4f}")
+print(f"Loss: {loss:.4f}")
+
+# 7. Predict and Report
+y_pred = np.argmax(model.predict(X_test), axis=-1)
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred, target_names=iris.target_names))
+
+
+
+#----Decision-----------
+
+
+
+import pandas as pd
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import classification_report, accuracy_score
+
+# 1. Load Iris dataset from sklearn
+iris = load_iris()
+X = pd.DataFrame(iris.data, columns=iris.feature_names)
+y = pd.Series(iris.target, name='Species')
+
+# 2. Train-Test Split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 3. Train Decision Tree Model
+model = DecisionTreeClassifier(random_state=42)
+model.fit(X_train, y_train)
+
+# 4. Predict
+y_pred = model.predict(X_test)
+
+# 5. Evaluate
+accuracy = accuracy_score(y_test, y_pred)
+print(f"🔹 Decision Tree Classifier Accuracy: {accuracy:.4f}")
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred, target_names=iris.target_names))
+
+
+
+#-----Hierarchy-----------
+
+
+
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.cluster import AgglomerativeClustering
+from sklearn.datasets import load_iris
+from scipy.cluster.hierarchy import dendrogram, linkage
+
+iris = load_iris()
+X = iris.data  # Features
+y = iris.target  # Target (flower species)
+
+Z = linkage(X, method='ward')
+
+plt.figure(figsize=(10, 7))
+dendrogram(Z)
+plt.title("Dendrogram for Hierarchical Clustering")
+plt.xlabel("Index of Samples")
+plt.ylabel("Euclidean Distance")
+plt.show()
+
+agg_clust = AgglomerativeClustering(n_clusters=3, affinity='euclidean', linkage='ward')
+y_agg = agg_clust.fit_predict(X)
+
+plt.scatter(X[:, 0], X[:, 1], c=y_agg, cmap='rainbow')
+plt.title('Hierarchical Clustering of Iris Data')
+plt.xlabel('Sepal Length')
+plt.ylabel('Sepal Width')
+plt.show()
+
+
+#-------K-MEAN--------------
+
+
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+
+# 1. Generate Synthetic Data (similar to Mall_Customers)
+np.random.seed(42)
+n_samples = 200
+
+income = np.random.normal(loc=60, scale=20, size=n_samples)  # Annual income (k$)
+spending_score = np.random.normal(loc=50, scale=25, size=n_samples)  # Spending Score (1-100)
+
+# Clamp values to realistic bounds
+income = np.clip(income, 15, 150)
+spending_score = np.clip(spending_score, 1, 100)
+
+df = pd.DataFrame({
+    'Annual Income (k$)': income,
+    'Spending Score (1-100)': spending_score
+})
+
+X = df[['Annual Income (k$)', 'Spending Score (1-100)']]
+
+# 2. Standardize Features
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# 3. Elbow Method to Find Optimal k
+inertia = []
+for k in range(1, 11):
+    kmeans = KMeans(n_clusters=k, random_state=42)
+    kmeans.fit(X_scaled)
+    inertia.append(kmeans.inertia_)
+
+plt.plot(range(1, 11), inertia)
+plt.title('Elbow Method for Optimal k')
+plt.xlabel('Number of clusters')
+plt.ylabel('Inertia')
+plt.show()
+
+# 4. Apply KMeans (k=5)
+kmeans = KMeans(n_clusters=5, random_state=42)
+y_kmeans = kmeans.fit_predict(X_scaled)
+
+# 5. Visualize Clusters
+plt.scatter(X_scaled[y_kmeans == 0, 0], X_scaled[y_kmeans == 0, 1], s=100, c='red', label='Cluster 1')
+plt.scatter(X_scaled[y_kmeans == 1, 0], X_scaled[y_kmeans == 1, 1], s=100, c='blue', label='Cluster 2')
+plt.scatter(X_scaled[y_kmeans == 2, 0], X_scaled[y_kmeans == 2, 1], s=100, c='green', label='Cluster 3')
+plt.scatter(X_scaled[y_kmeans == 3, 0], X_scaled[y_kmeans == 3, 1], s=100, c='cyan', label='Cluster 4')
+plt.scatter(X_scaled[y_kmeans == 4, 0], X_scaled[y_kmeans == 4, 1], s=100, c='magenta', label='Cluster 5')
+
+# 6. Centroids
+plt.scatter(kmeans.cluster_centers_[:, 0], kmeans.cluster_centers_[:, 1],
+            s=300, c='yellow', marker='X', label='Centroids')
+
+plt.title('Customer Segmentation using K-Means')
+plt.xlabel('Annual Income (k$)')
+plt.ylabel('Spending Score (1-100)')
+plt.legend()
+plt.show()
+
+
+#-----KNN------
+
+
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import classification_report, accuracy_score
+from sklearn.preprocessing import StandardScaler
+from sklearn.datasets import load_iris
+
+# 1. Load Iris dataset from sklearn
+iris = load_iris()
+X = pd.DataFrame(iris.data, columns=iris.feature_names)
+y = pd.Series(iris.target, name='Species')
+
+# 2. Train-Test Split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 3. Feature Scaling
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# 4. K-NN Classifier (k = 5)
+k = 5
+model = KNeighborsClassifier(n_neighbors=k)
+model.fit(X_train, y_train)
+
+# 5. Prediction and Evaluation
+y_pred = model.predict(X_test)
+
+accuracy = accuracy_score(y_test, y_pred)
+print(f"🔹 K-NN Classifier Accuracy: {accuracy:.4f}")
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred, target_names=iris.target_names))
+
+
+#----L1_L2-------
+
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.datasets import fetch_california_housing
+from sklearn.linear_model import Ridge, Lasso
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.preprocessing import StandardScaler
+
+housing = fetch_california_housing()
+X = pd.DataFrame(housing.data, columns=housing.feature_names)
+y = housing.target
+
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
+
+lasso = Lasso(alpha=0.1)
+lasso.fit(X_train, y_train)
+y_pred_lasso = lasso.predict(X_test)
+
+ridge = Ridge(alpha=1.0)
+ridge.fit(X_train, y_train)
+y_pred_ridge = ridge.predict(X_test)
+
+def evaluate(model_name, y_test, y_pred):
+    print(f"\n{model_name} Evaluation:")
+    print(f"Mean Squared Error: {mean_squared_error(y_test, y_pred):.4f}")
+    print(f"R2 Score: {r2_score(y_test, y_pred):.4f}")
+
+evaluate("Lasso Regression", y_test, y_pred_lasso)
+evaluate("Ridge Regression", y_test, y_pred_ridge)
+
+plt.figure(figsize=(10, 5))
+plt.plot(lasso.coef_, label='Lasso Coefficients (L1)')
+plt.plot(ridge.coef_, label='Ridge Coefficients (L2)', linestyle='--')
+plt.xlabel('Feature Index')
+plt.ylabel('Coefficient Value')
+plt.title('Lasso vs Ridge Coefficients')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+
+#----Naive----------
+
+
+import numpy as np
+import pandas as pd
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.naive_bayes import GaussianNB
+from sklearn.metrics import confusion_matrix, classification_report, roc_auc_score
+
+iris = load_iris()
+X = iris.data
+y = iris.target
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+model = GaussianNB()
+model.fit(X_train, y_train)
+
+y_pred = model.predict(X_test)
+
+conf_matrix = confusion_matrix(y_test, y_pred)
+report = classification_report(y_test, y_pred, target_names=iris.target_names)
+
+print("Confusion Matrix:")
+print(conf_matrix)
+print("\nClassification Report:")
+print(report)
+
+scores = cross_val_score(model, X, y, cv=5)
+print(f"\nCross-validation Accuracy Scores: {scores}")
+print(f"Mean Accuracy: {scores.mean():.4f}")
+
+
+
+#-----SVM------
+
+
+from sklearn import datasets
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.metrics import accuracy_score
+
+
+iris = datasets.load_iris()
+X = iris.data
+y = iris.target
+
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y,
+    test_size=0.3,
+    random_state=42,
+    stratify=y
+)
+
+pipeline = Pipeline([
+    ('scaler', StandardScaler()),  
+    ('svm', SVC(kernel='rbf', C=1.0, gamma='scale', random_state=42))  # Default SVM
+])
+
+pipeline.fit(X_train, y_train)
+
+
+y_pred = pipeline.predict(X_test)
+print(f"Test Accuracy: {accuracy_score(y_test, y_pred):.4f}")
+
+
+
+#----Simple-------------
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.metrics import mean_squared_error, r2_score
+
+# 1. Generate Synthetic Data
+np.random.seed(42)
+tv_spend = np.random.uniform(10, 300, 200)  # TV ad spend between $10k to $300k
+noise = np.random.normal(0, 3, 200)         # Random noise
+sales = 0.05 * tv_spend + 5 + noise         # Sales = 0.05*TV + 5 + noise
+
+# Create DataFrame
+df = pd.DataFrame({'TV': tv_spend, 'Sales': sales})
+
+# 2. Train-Test Split
+X = df[['TV']]
+y = df['Sales']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 3. Train Model
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# 4. Predict
+y_pred = model.predict(X_test)
+
+# 5. Evaluate
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+print(f"Mean Squared Error (MSE): {mse:.4f}")
+print(f"R² Score: {r2:.4f}")
+print(f"Intercept: {model.intercept_:.4f}")
+print(f"Coefficient (TV): {model.coef_[0]:.4f}")
+
+# 6. Visualize
+plt.scatter(X_test, y_test, color='blue', label="Actual")
+plt.plot(X_test, y_pred, color='red', linewidth=2, label="Predicted Line")
+plt.xlabel("TV Advertisement Spend ($)")
+plt.ylabel("Sales (units)")
+plt.title("Simple Linear Regression on Synthetic Data")
+plt.legend()
+plt.show()
+
+# 7. Cross-validation (k=5)
+cv_scores = cross_val_score(model, X, y, cv=5, scoring='r2')
+print(f"Cross-Validation R² Scores: {cv_scores}")
+print(f"Mean R² Score (CV): {np.mean(cv_scores):.4f}")
+
+
+#----Multiple-------
+
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.model_selection import train_test_split, cross_val_score
+
+# 1. Create Synthetic Dataset
+np.random.seed(42)
+n_samples = 200
+
+TV = np.random.uniform(10, 300, n_samples)
+Radio = np.random.uniform(5, 50, n_samples)
+Newspaper = np.random.uniform(1, 30, n_samples)
+noise = np.random.normal(0, 3, n_samples)
+
+# Sales = 0.045*TV + 0.18*Radio + 0.01*Newspaper + 4 + noise
+Sales = 0.045 * TV + 0.18 * Radio + 0.01 * Newspaper + 4 + noise
+
+# Combine into DataFrame
+df = pd.DataFrame({
+    'TV': TV,
+    'Radio': Radio,
+    'Newspaper': Newspaper,
+    'Sales': Sales
+})
+
+# 2. Train-Test Split
+X = df[['TV', 'Radio', 'Newspaper']]
+y = df['Sales']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 3. Train Model
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# 4. Predict
+y_pred = model.predict(X_test)
+
+# 5. Evaluation
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+print(f"Mean Squared Error (MSE): {mse:.4f}")
+print(f"R² Score: {r2:.4f}")
+print(f"Intercept: {model.intercept_:.4f}")
+print(f"Coefficients: {list(zip(X.columns, model.coef_))}")
+
+# 6. Cross-validation
+cv_scores = cross_val_score(model, X, y, cv=5, scoring='r2')
+print(f"Cross-Validation R² Scores: {cv_scores}")
+print(f"Mean R² Score (CV): {np.mean(cv_scores):.4f}")
+
+
+
+#------Logistic--------
+
+
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report, roc_auc_score, roc_curve
+import matplotlib.pyplot as plt
+
+# 1. Generate Synthetic Dataset
+np.random.seed(42)
+n_samples = 400
+
+# Features
+age = np.random.randint(18, 60, n_samples)
+salary = np.random.randint(15000, 150000, n_samples)
+
+# Target generation with a pattern
+# Higher salary and middle age more likely to purchase
+prob_purchase = 1 / (1 + np.exp(-(0.05 * (salary - 60000) + 0.1 * (35 - age))))
+purchased = (np.random.rand(n_samples) < prob_purchase).astype(int)
+
+# Create DataFrame
+df = pd.DataFrame({
+    'Age': age,
+    'EstimatedSalary': salary,
+    'Purchased': purchased
+})
+
+# 2. Feature and Target Split
+X = df[['Age', 'EstimatedSalary']]
+y = df['Purchased']
+
+# 3. Train-Test Split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 4. Train Logistic Regression Model
+model = LogisticRegression()
+model.fit(X_train, y_train)
+
+# 5. Predictions
+y_pred = model.predict(X_test)
+y_prob = model.predict_proba(X_test)[:, 1]
+
+# 6. Evaluation
+accuracy = accuracy_score(y_test, y_pred)
+cm = confusion_matrix(y_test, y_pred)
+report = classification_report(y_test, y_pred, output_dict=True)
+auc = roc_auc_score(y_test, y_prob)
+
+print("🔹 Logistic Regression Results")
+print(f"Accuracy: {accuracy:.4f}")
+print(f"AUC Score: {auc:.4f}")
+print(f"Confusion Matrix:\n{cm}")
+print("Classification Report:")
+for label, scores in report.items():
+    if isinstance(scores, dict):
+        print(f"{label}: Precision={scores['precision']:.2f}, Recall={scores['recall']:.2f}, F1={scores['f1-score']:.2f}")
+
+# 7. ROC Curve
+fpr, tpr, thresholds = roc_curve(y_test, y_prob)
+plt.plot(fpr, tpr, label='Logistic Regression (AUC = %.2f)' % auc)
+plt.plot([0, 1], [0, 1], 'k--')  # Diagonal
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('ROC Curve')
+plt.legend()
+plt.show()
+
+
+
+
+#------Polynomial------
+
+
+import pandas as pd 
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.metrics import mean_squared_error, r2_score
+
+# 1. Generate Synthetic Data
+np.random.seed(42)
+n_samples = 200
+TV = np.random.uniform(10, 300, n_samples)
+noise = np.random.normal(0, 3, n_samples)
+
+# Quadratic relationship: Sales = 0.03*TV^2 - 0.5*TV + 20 + noise
+Sales = 0.03 * (TV ** 2) - 0.5 * TV + 20 + noise
+
+df = pd.DataFrame({'TV': TV, 'Sales': Sales})
+
+# 2. Polynomial Features (degree = 2)
+X = df[['TV']]
+y = df['Sales']
+poly = PolynomialFeatures(degree=2)
+X_poly = poly.fit_transform(X)
+
+# 3. Train-Test Split
+X_train, X_test, y_train, y_test = train_test_split(X_poly, y, test_size=0.2, random_state=42)
+
+# 4. Train Model
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# 5. Predict
+y_pred = model.predict(X_test)
+
+# 6. Evaluation
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+print(f"Polynomial Degree: 2")
+print(f"Mean Squared Error (MSE): {mse:.4f}")
+print(f"R² Score: {r2:.4f}")
+
+# 7. Visualization (on sorted data)
+X_sorted = np.sort(X.values, axis=0)
+X_poly_sorted = poly.transform(X_sorted)
+y_pred_plot = model.predict(X_poly_sorted)
+
+plt.scatter(X, y, color='blue', label='Actual')
+plt.plot(X_sorted, y_pred_plot, color='red', linewidth=2, label='Polynomial Curve')
+plt.title("Polynomial Regression (TV vs Sales)")
+plt.xlabel("TV Advertising Budget")
+plt.ylabel("Sales")
+plt.legend()
+plt.show()
+
+# 8. Cross-validation
+cv_scores = cross_val_score(model, X_poly, y, cv=5, scoring='r2')
+print(f"Cross-Validation R² Scores: {cv_scores}")
+print(f"Mean R² Score (CV): {np.mean(cv_scores):.4f}")
